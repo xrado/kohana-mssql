@@ -1,13 +1,9 @@
 <?php defined('SYSPATH') or die('No direct script access.'); 
 /**
- * MsSQL database connection.
- *
- * @package    Kohana/Database
- * @category   Drivers
- * @author     Kohana Team, xrado
- * @copyright  (c) 2008-2009 Kohana Team
- * @license    http://kohanaphp.com/license
- */
+* MsSQL database connection.
+*
+* @author     Kohana Team, xrado
+*/
 class Kohana_Database_MsSQL extends Database_PDO {
 	
 	public function query($type, $sql, $as_object)
