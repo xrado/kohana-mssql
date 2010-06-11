@@ -1,13 +1,9 @@
 <?php defined('SYSPATH') or die('No direct script access.'); 
 /**
- * MsSQL database connection.
- *
- * @package    Kohana/Database
- * @category   Drivers
- * @author     Kohana Team, xrado
- * @copyright  (c) 2008-2009 Kohana Team
- * @license    http://kohanaphp.com/license
- */
+* MsSQL database connection.
+*
+* @author     Kohana Team, xrado
+*/
 class Kohana_Database_MsSQL extends Database_PDO {
 	
 	public function query($type, $sql, $as_object)
@@ -16,8 +12,6 @@ class Kohana_Database_MsSQL extends Database_PDO {
 		$this->_connection or $this->connect();
 		
 		// Mssql specific
-		$limit = $offset = NULL;
-
 		if(preg_match("/OFFSET ([0-9]+)/i",$sql,$matches))
 		{
 			list($replace,$offset) = $matches;
@@ -30,9 +24,9 @@ class Kohana_Database_MsSQL extends Database_PDO {
 			$sql = str_replace($replace,'',$sql);
 		}
 
-		if($limit || $offset)
+		if(isset($limit) || isset($offset))
 		{
-			if (!$offset) 
+			if (!isset($offset)) 
 			{
 				$sql = preg_replace("/^(SELECT|DELETE|UPDATE)\s/i", "$1 TOP " . $limit . ' ', $sql);
 			} 
@@ -130,8 +124,8 @@ class Kohana_Database_MsSQL extends Database_PDO {
 	
 	public function insert_id()
 	{
-		$data = $this->query(Database::SELECT,'SCOPE_IDENTITY() as id',FALSE)->current();
-		return Arr::get($data,'id');
+		$data = $this->query(Database::SELECT,'SELECT SCOPE_IDENTITY() as insert_id',FALSE)->current();
+		return Arr::get($data,'insert_id');
 	}
 	
 	public function datatype($type)
@@ -171,23 +165,36 @@ class Kohana_Database_MsSQL extends Database_PDO {
 		return $tables;
 	}
 	
-	//@todo make this work
 	public function list_columns($table, $like = NULL)
 	{
 		if (is_string($like))
 		{
-			$results = $this->query(Database::SELECT,'SELECT COLUMN_NAME AS Field, DATA_TYPE as Type, IS_NULLABLE as is_nullable FROM INFORMATION_SCHEMA.Columns WHERE TABLE_NAME LIKE '.$this->quote($table), FALSE);
+			$results = $this->query(Database::SELECT,'SELECT * FROM INFORMATION_SCHEMA.Columns WHERE TABLE_NAME LIKE '.$this->quote($table), FALSE);
 		}
 		else
 		{
-			$results = $this->query(Database::SELECT,'SELECT COLUMN_NAME AS Field, DATA_TYPE as Type, IS_NULLABLE as is_nullable FROM INFORMATION_SCHEMA.Columns WHERE TABLE_NAME = '.$this->quote($table), FALSE);
+			$results = $this->query(Database::SELECT,'SELECT * FROM INFORMATION_SCHEMA.Columns WHERE TABLE_NAME = '.$this->quote($table), FALSE);
 		}
 
 		$result = array();
-		foreach ($results as $column)
+		foreach ($results as $row)
 		{
-			// Make an associative array
-			$result[$column['Field']] = $this->datatype($column['Type']);
+			list($type, $length) = $this->_parse_type($row['DATA_TYPE']);
+
+			$column = $this->datatype($type);
+
+			$column['column_name']      = $row['COLUMN_NAME'];
+			$column['column_default']   = $row['COLUMN_DEFAULT'];
+			$column['data_type']        = $type;
+			$column['is_nullable']      = ($row['IS_NULLABLE'] == 'YES');
+			$column['ordinal_position'] = $row['ORDINAL_POSITION'];
+			
+			if($row['CHARACTER_MAXIMUM_LENGTH'])
+			{
+				$column['character_maximum_length'] = $row['CHARACTER_MAXIMUM_LENGTH'];
+			}
+			
+			$result[$row['COLUMN_NAME']] = $column;
 		}
 
 		return $result;
