@@ -147,12 +147,12 @@ class Kohana_Database_MsSQL extends Database_PDO {
 		if (is_string($like))
 		{
 			// Search for table names
-			$result = $this->query(Database::SELECT, 'SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME LIKE '.$this->quote($like), false)->as_array();
+			$result = $this->query(Database::SELECT, 'SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME LIKE '.$this->quote($like), FALSE)->as_array();
 		}
 		else
 		{
 			// Find all table names
-			$result = $this->query(Database::SELECT, 'SELECT * FROM INFORMATION_SCHEMA.TABLES', false)->as_array();
+			$result = $this->query(Database::SELECT, 'SELECT * FROM INFORMATION_SCHEMA.TABLES', FALSE)->as_array();
 		}
 
 		$tables = array();
