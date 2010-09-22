@@ -3,8 +3,8 @@
 requirements
 ------------
 
-- MSSql Server 2005+
-- pdo mssql driver
+- MSSql Server 2005 (or newer)
+- php pdo mssql driver
 - freetds
 
 
