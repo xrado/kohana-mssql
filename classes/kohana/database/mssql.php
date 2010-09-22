@@ -134,6 +134,7 @@ class Kohana_Database_MsSQL extends Database_PDO {
 		(
 			'nvarchar'  => array('type' => 'string'),
 			'ntext'     => array('type' => 'string'),
+			'tinyint'   => array('type' => 'int', 'min' => '0', 'max' => '255'),
 		);
 
 		if (isset($types[$type]))
