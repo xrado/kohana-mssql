@@ -124,7 +124,11 @@ class Kohana_Database_MsSQL extends Database_PDO {
 	
 	public function insert_id()
 	{
-		$data = $this->query(Database::SELECT,'SELECT SCOPE_IDENTITY() as insert_id',FALSE)->current();
+		$table = preg_match('/^insert\s+into\s+(.*?)\s+/i',$this->last_query,$match) ? arr::get($match,1) : NULL;
+		if (!empty($table)) $query = 'SELECT IDENT_CURRENT(\'' . $this->quote_identifier($table) . '\') AS insert_id';
+		else $query = 'SELECT SCOPE_IDENTITY() AS insert_id';
+
+		$data = $this->query(Database::SELECT,$query,FALSE)->current();
 		return Arr::get($data,'insert_id');
 	}
 	
