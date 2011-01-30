@@ -129,7 +129,7 @@ class Kohana_Database_MsSQL extends Database_PDO {
 		else $query = 'SELECT SCOPE_IDENTITY() AS insert_id';
 
 		$data = $this->query(Database::SELECT,$query,FALSE)->current();
-		return Arr::get($data,'insert_id');
+		return (int) Arr::get($data,'insert_id');
 	}
 	
 	public function datatype($type)
