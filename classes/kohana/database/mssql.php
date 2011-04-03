@@ -6,7 +6,7 @@
 */
 class Kohana_Database_MsSQL extends Database_PDO {
 	
-	public function query($type, $sql, $as_object)
+	public function query($type, $sql, $as_object = FALSE, array $params = NULL)
 	{
 		// Make sure the database is connected
 		$this->_connection or $this->connect();
@@ -74,8 +74,12 @@ class Kohana_Database_MsSQL extends Database_PDO {
 				Profiler::delete($benchmark);
 			}
 
-			// Rethrow the exception
-			throw $e;
+			// Convert the exception in a database exception
+			throw new Database_Exception($e->getCode(), '[:code] :error ( :query )', array(
+				':code' => $e->getMessage(),
+				':error' => $e->getCode(),
+				':query' => $sql,
+			), $e->getCode());
 		}
 
 		if (isset($benchmark))
@@ -95,17 +99,17 @@ class Kohana_Database_MsSQL extends Database_PDO {
 			}
 			elseif (is_string($as_object))
 			{
-				$result->setFetchMode(PDO::FETCH_CLASS, $as_object);
+				$result->setFetchMode(PDO::FETCH_CLASS, $as_object, $params);
 			}
 			else
 			{
 				$result->setFetchMode(PDO::FETCH_CLASS, 'stdClass');
 			}
-			
+
 			$result = $result->fetchAll();
 
 			// Return an iterator of results
-			return new Database_Result_Cached($result, $sql, $as_object);
+			return new Database_Result_Cached($result, $sql, $as_object, $params);
 		}
 		elseif ($type === Database::INSERT)
 		{
@@ -147,6 +151,30 @@ class Kohana_Database_MsSQL extends Database_PDO {
 		return parent::datatype($type);
 	}
 	
+	public function begin($mode = NULL)
+	{
+		// Make sure the database is connected
+		$this->_connection or $this->connect();
+
+		return $this->_connection->beginTransaction();
+	}
+
+	public function commit()
+	{
+		// Make sure the database is connected
+		$this->_connection or $this->connect();
+
+		return $this->_connection->commit();
+	}
+
+	public function rollback()
+	{
+		// Make sure the database is connected
+		$this->_connection or $this->connect();
+
+		return $this->_connection->rollBack();
+	}
+	
 	public function list_tables($like = NULL)
 	{
 		if (is_string($like))
@@ -170,7 +198,7 @@ class Kohana_Database_MsSQL extends Database_PDO {
 		return $tables;
 	}
 	
-	public function list_columns($table, $like = NULL)
+	public function list_columns($table, $like = NULL, $add_prefix = TRUE)
 	{
 		if (is_string($like))
 		{
