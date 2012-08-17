@@ -32,19 +32,21 @@ class Kohana_Database_MsSQL extends Database_PDO {
 			} 
 			else 
 			{
-				$orderby = stristr($sql, 'ORDER BY');
+				$ob_count = (int)preg_match_all('/ORDER BY/i',$sql,$ob_matches,PREG_OFFSET_CAPTURE);
 
-				if (!$orderby) 
+				if($ob_count < 1) 
 				{
 					$over = 'ORDER BY (SELECT 0)';
 				} 
 				else 
 				{
+					$ob_last = array_pop($ob_matches[0]);
+					$orderby = strrchr($sql, $ob_last[0]);
 					$over = preg_replace('/[^,\s]*\.([^,\s]*)/i', 'inner_tbl.$1', $orderby);
+					
+					// Remove ORDER BY clause from $sql
+					$sql = substr($sql, 0, $ob_last[1]);
 				}
-				
-				// Remove ORDER BY clause from $sql
-				$sql = preg_replace('/\s+ORDER BY(.*)/', '', $sql);
 				
 				// Add ORDER BY clause as an argument for ROW_NUMBER()
 				$sql = "SELECT ROW_NUMBER() OVER ($over) AS KOHANA_DB_ROWNUM, * FROM ($sql) AS inner_tbl";
@@ -75,7 +77,7 @@ class Kohana_Database_MsSQL extends Database_PDO {
 			}
 
 			// Convert the exception in a database exception
-			throw new Database_Exception($e->getCode(), '[:code] :error ( :query )', array(
+			throw new Database_Exception('[:code] :error ( :query )', array(
 				':code' => $e->getMessage(),
 				':error' => $e->getCode(),
 				':query' => $sql,
