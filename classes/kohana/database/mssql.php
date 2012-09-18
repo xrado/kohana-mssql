@@ -76,11 +76,15 @@ class Kohana_Database_MsSQL extends Database_PDO {
 				Profiler::delete($benchmark);
 			}
 
+			$errArr = $this->_connection->errorInfo();
+			$resultTextError = $this->_connection->query( "select * from sys.messages where  language_id=1033 and message_id=".arr::get($errArr, 1, 0) )->fetchAll();
+			
 			// Convert the exception in a database exception
-			throw new Database_Exception('[:code] :error ( :query )', array(
-				':code' => $e->getMessage(),
-				':error' => $e->getCode(),
-				':query' => $sql,
+			throw new Database_Exception('[:code] :error ( :info )', array(
+				':code' => $e->getCode(),
+				':error' => $e->getMessage(),
+				#':query' => $sql,
+				':info' =>  arr::get($resultTextError[0], 'text')
 			), $e->getCode());
 		}
 
